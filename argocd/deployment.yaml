@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alsace-bot
+  labels:
+    app: alsace-bot
+spec:
+  replicas: 1 # Botは二重ログインを防ぐため基本1
+  selector:
+    matchLabels:
+      app: alsace-bot
+  template:
+    metadata:
+      labels:
+        app: alsace-bot
+    spec:
+      containers:
+      - name: alsace-bot
+        image: alsace-bot:v1.0-beta # さっきビルドしたイメージ名
+        ports:
+        - containerPort: 3000
+        # --- ここが重要：Liveness Probe ---
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 15 # 起動直後の猶予時間
+          periodSeconds: 20       # 20秒ごとにチェック
+        # --- 環境変数の設定 ---
+        env:
+        - name: DISCORD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: alsace-secrets
+              key: discord-token
