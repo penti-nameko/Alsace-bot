@@ -11,10 +11,11 @@ datasource db {
 
 // モデル定義
 model gitHubRepo {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   owner     String
   userId    String
   repo      String
+  user      UserSetting @relation(fields: [userId], references: [userId])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -24,9 +25,8 @@ model UserSetting {
   id           String   @id @default(uuid())
   userId       String   @unique
   githubToken  String?  // 暗号化済み
-  harborHost   String?  // https://harbor.example.com
-  harborUser   String?
-  harborPass   String?  // 暗号化済み
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  repos        gitHubRepo[]
 }

@@ -65,26 +65,37 @@ export async function execute(interaction: Interaction) {
         .setCustomId('gh-token').setLabel("GitHub Token (PAT)").setStyle(TextInputStyle.Short).setRequired(true);
 
       const hHost = new TextInputBuilder()
-        .setCustomId('h-host').setLabel("Harbor Host (URL)").setStyle(TextInputStyle.Short).setRequired(false);
-
-      const hUser = new TextInputBuilder()
-        .setCustomId('h-user').setLabel("Harbor Username").setStyle(TextInputStyle.Short).setRequired(false);
-
-      const hPass = new TextInputBuilder()
-        .setCustomId('h-pass').setLabel("Harbor Password").setStyle(TextInputStyle.Short).setRequired(false);
-
       // 各入力をRowに変換して追加
       modal.addComponents(
         new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(ghToken),
-        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(hHost),
-        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(hUser),
-        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(hPass)
       );
 
       try {
         await interaction.showModal(modal);
       } catch (e) {
         console.error('モーダル表示エラー:', e);
+      }
+    }
+  }
+
+  // --- 2.7. セレクトメニューの操作を検知 ---
+  if (interaction.isStringSelectMenu()) {
+    // customIdからコマンド名を抽出する (例: 'github-unregister-select' -> 'github')
+    const commandName = interaction.customId.split('-')[0];
+    const client: any = interaction.client;
+    const command = client.commands.get(commandName);
+
+    if (!command) return;
+
+    try {
+      if (command.executeSelectMenu) {
+        await command.executeSelectMenu(interaction);
+      }
+    } catch (error) {
+      logger.error(`Error executing select menu for ${interaction.customId}`);
+      logger.error(error);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: 'メニュー選択の処理中にエラーが発生しました。', flags: [MessageFlags.Ephemeral] });
       }
     }
   }
@@ -112,32 +123,22 @@ export async function execute(interaction: Interaction) {
 
       try {
         const token = interaction.fields.getTextInputValue('gh-token');
-        const harborHost = interaction.fields.getTextInputValue('h-host');
-        const harborUser = interaction.fields.getTextInputValue('h-user');
-        const harborPass = interaction.fields.getTextInputValue('h-pass');
         
         if (!token) {
           throw new Error("トークンが入力されていません。");
         }
 
         const encryptedToken = encrypt(token);
-        const encryptedHarborPass = harborPass ? encrypt(harborPass) : null;
 
         // DB保存
         await prisma.userSetting.upsert({
           where: { userId: interaction.user.id },
           update: { 
             githubToken: encryptedToken,
-            harborHost: harborHost || null,
-            harborUser: harborUser || null,
-            harborPass: encryptedHarborPass
           },
           create: { 
             userId: interaction.user.id, 
             githubToken: encryptedToken,
-            harborHost: harborHost || null,
-            harborUser: harborUser || null,
-            harborPass: encryptedHarborPass
           }
         });
 
@@ -146,10 +147,13 @@ export async function execute(interaction: Interaction) {
         });
 
       } catch (error: any) {
-        logger.error('Failed to save GitHub token:', error);
-        await interaction.editReply({ 
-          content: `❌ 保存中にエラーが発生しました：${error.message}` 
-        });
+        logger.error('Failed to save settings:', error);
+        // deferReply 済みなので必ず editReply を使う
+        if (interaction.deferred) {
+          await interaction.editReply({ 
+            content: `❌ 保存中にエラーが発生しました：${error.message}` 
+          }).catch(() => {});
+        }
       }
     }
   }

@@ -1,53 +1,19 @@
-import { logger } from '../utils/logger';
+import { Octokit } from '@octokit/rest';
+import { StringSelectMenuOptionBuilder } from 'discord.js';
 
-export interface gitHubRepoInfo {
-  name: string;
-  description: string;
-  stars: number;
-  forks: number;
-  url: string;
-}
+export async function fetchUserRepos(token: string): Promise<StringSelectMenuOptionBuilder[]> {
+  const octokit = new Octokit({ auth: token });
+  
+  // 自分が所有している、または書き込み権限があるリポジトリを取得
+  const { data } = await octokit.repos.listForAuthenticatedUser({
+    visibility: 'all',
+    affiliation: 'owner,collaborator',
+    sort: 'updated',
+    per_page: 25 // 最初は直近25件くらいが選びやすい
+  });
 
-export class GitHubService {
-  private readonly baseUrl = 'https://api.github.com';
-
-  /**
-   * レポジトリの基本情報を取得する
-   */
-  public async getRepoInfo(owner: string, repo: string): Promise<gitHubRepoInfo | null> {
-    try {
-      const headers: HeadersInit = {
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'Alsace-bot' // GitHub APIはUser-Agentが必須
-      };
-
-      // .envにトークンがあれば認証ヘッダーを追加
-      if (process.env.GITHUB_TOKEN) {
-        headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
-      }
-
-      const response = await fetch(`${this.baseUrl}/repos/${owner}/${repo}`, {
-        headers
-      });
-
-      if (!response.ok) {
-        // レート制限エラーなどの詳細をログに出す
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(`GitHub API error: ${response.status} ${response.statusText} - ${errorBody.message}`);
-      }
-
-      const data = await response.json();
-
-      return {
-        name: data.full_name,
-        description: data.description,
-        stars: data.stargazers_count,
-        forks: data.forks_count,
-        url: data.html_url,
-      };
-    } catch (error) {
-      logger.error('Failed to fetch GitHub repo info:', error);
-      return null;
-    }
-  }
+  return data.map(repo => new StringSelectMenuOptionBuilder()
+    .setLabel(repo.full_name)
+    .setValue(repo.full_name)
+    .setDescription(repo.private ? '🔒 Private' : '🌐 Public'));
 }
