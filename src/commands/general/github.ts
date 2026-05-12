@@ -52,7 +52,7 @@ export const data = new SlashCommandBuilder()
     sub.setName('ghcr').setDescription('GHCR コンテナイメージ検索')
       .addStringOption(opt => opt.setName('query').setDescription('検索ワード').setRequired(true))
   )
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageWebhooks);
+  .setDefaultMemberPermissions(null);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   // ⚡ 3秒ルール回避のため、何よりも先に defer

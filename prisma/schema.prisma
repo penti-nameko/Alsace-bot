@@ -30,3 +30,16 @@ model UserSetting {
 
   repos        gitHubRepo[]
 }
+model Todo {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  content   String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Afk {
+  userId    String   @id
+  reason    String   @default("AFK (離席中)")
+  createdAt DateTime @default(now())
+}
