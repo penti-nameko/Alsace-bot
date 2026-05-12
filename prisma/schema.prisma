@@ -13,9 +13,20 @@ datasource db {
 model gitHubRepo {
   id        Int      @id @default(autoincrement())
   owner     String
+  userId    String
   repo      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([owner, repo])
+  @@unique([userId, owner, repo])
+}
+model UserSetting {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  githubToken  String?  // 暗号化済み
+  harborHost   String?  // https://harbor.example.com
+  harborUser   String?
+  harborPass   String?  // 暗号化済み
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

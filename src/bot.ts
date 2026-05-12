@@ -1,4 +1,4 @@
-import { Client, Collection, GatewayIntentBits } from 'discord.js';
+import { Client, Collection, GatewayIntentBits, REST, Routes } from 'discord.js';
 import { logger } from './utils/logger';
 import fs from 'fs';
 import path from 'path';
@@ -72,10 +72,33 @@ export class DiscordBot extends Client {
   }
 }
 
+  /**
+   * コマンドをDiscordにデプロイ（登録）する
+   */
+  private async deployCommands(token: string): Promise<void> {
+    const clientId = process.env.CLIENT_ID;
+    if (!clientId) {
+      logger.warn('CLIENT_ID が環境変数に設定されていないため、コマンドのデプロイをスキップしたぞ。');
+      return;
+    }
+
+    const rest = new REST({ version: '10' }).setToken(token);
+    const commandData = this.commands.map(command => command.data.toJSON());
+
+    try {
+      logger.info(`${commandData.length} 個のアプリケーションコマンドを更新中...`);
+      await rest.put(Routes.applicationCommands(clientId), { body: commandData });
+      logger.info('アプリケーションコマンドの更新が完了したぞ！');
+    } catch (error) {
+      logger.error('コマンドのデプロイ中にエラーが発生した:', error);
+    }
+  }
+
   public async start(token: string): Promise<void> {
     try {
       await this.loadEvents();
       await this.loadCommands();
+      await this.deployCommands(token);
       await this.login(token);
       logger.info('Bot has been logged in successfully.');
     } catch (error) {
