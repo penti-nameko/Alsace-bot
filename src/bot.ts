@@ -78,7 +78,7 @@ export class DiscordBot extends Client {
   private async deployCommands(token: string): Promise<void> {
     const clientId = process.env.CLIENT_ID;
     if (!clientId) {
-      logger.warn('CLIENT_ID が環境変数に設定されていないため、コマンドのデプロイをスキップしたぞ。');
+      logger.warn('CLIENT_ID が環境変数に設定されていないため、コマンドのデプロイをスキップしました。');
       return;
     }
 
@@ -88,7 +88,7 @@ export class DiscordBot extends Client {
     try {
       logger.info(`${commandData.length} 個のアプリケーションコマンドを更新中...`);
       await rest.put(Routes.applicationCommands(clientId), { body: commandData });
-      logger.info('アプリケーションコマンドの更新が完了したぞ！');
+      logger.info('アプリケーションコマンドの更新が完了しました！');
     } catch (error) {
       logger.error('コマンドのデプロイ中にエラーが発生した:', error);
     }

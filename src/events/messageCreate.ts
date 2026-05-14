@@ -26,8 +26,10 @@ export async function execute(message: Message) {
       if (message.deletable) {
         await message.delete().catch(() => {});
         // 通知用のメッセージを送信（5秒で消えるようにすると邪魔にならない）
-        const notice = await message.channel.send(`⚠️ ${message.author}さん、${user.username}さんは現在AFK中です: **${targetAfk.reason}**\n(メンション保護のためメッセージを削除しました)`);
-        setTimeout(() => notice.delete().catch(() => {}), 10000);
+        if (message.channel.isTextBased() && 'send' in message.channel) {
+          const notice = await message.channel.send(`⚠️ ${message.author}さん、${user.username}さんは現在AFK中です: **${targetAfk.reason}**\n(メンション保護のためメッセージを削除しました)`);
+          setTimeout(() => notice.delete().catch(() => {}), 10000);
+        }
       }
     }
   }

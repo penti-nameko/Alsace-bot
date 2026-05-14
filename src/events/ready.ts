@@ -11,20 +11,20 @@ export async function execute(client: Client) {
 
   // アクティビティに表示する情報のリスト
   const statusList = [
-    () => ` ${client.guilds.cache.size} サーバー`,
-    () => ` /info help`,
+    () => `🏰 ${client.guilds.cache.size} サーバー`,
+    () => `📖 /info help`,
     () => {
       const uptime = Math.floor(process.uptime());
       const h = Math.floor(uptime / 3600);
       const m = Math.floor((uptime % 3600) / 60);
-      return ` ${h}h ${m}m`;
+      return `⏱️ ${h}h ${m}m`;
     },
-    () => ` Ping: ${Math.round(client.ws.ping)}ms`,
+    () => `📶 Ping: ${Math.round(client.ws.ping)}ms`,
     () => {
       const usedMem = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
-      return ` RAM: ${usedMem}MB`;
+      return `🧠 RAM: ${usedMem}MB`;
     },
-    () => ` CPU: ${os.loadavg()[0].toFixed(2)}%`
+    () => `💻 CPU: ${os.loadavg()[0].toFixed(2)}%`
   ];
 
   let i = 0;

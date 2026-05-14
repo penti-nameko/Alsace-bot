@@ -64,7 +64,6 @@ export async function execute(interaction: Interaction) {
       const ghToken = new TextInputBuilder()
         .setCustomId('gh-token').setLabel("GitHub Token (PAT)").setStyle(TextInputStyle.Short).setRequired(true);
 
-      const hHost = new TextInputBuilder()
       // 各入力をRowに変換して追加
       modal.addComponents(
         new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(ghToken),
