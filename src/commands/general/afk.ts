@@ -15,5 +15,5 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     create: { userId: interaction.user.id, reason }
   });
 
-  return interaction.reply({ content: `💤 AFKモードを有効にしたぞ: **${reason}**\n次に発言すると自動解除される。`, ephemeral: true });
+  return interaction.reply({ content: `💤 AFKモードを有効にしました: **${reason}**\n次に発言すると自動解除されます。`, ephemeral: true });
 }

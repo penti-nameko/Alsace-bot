@@ -70,7 +70,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           .setStyle(ButtonStyle.Primary)
       );
       return await interaction.editReply({
-        content: '🔒 **外部サービス連携設定**\n下のボタンからトークンや接続情報を登録してくれ。',
+        content: '🔒 **外部サービス連携設定**\n下のボタンからトークンや接続情報を登録してください。',
         components: [row]
       });
     }
@@ -78,18 +78,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // --- ADD: セレクトメニューでリポジトリ登録 ---
     if (subcommand === 'add') {
       const settings = await prisma.userSetting.findUnique({ where: { userId: interaction.user.id } });
-      if (!settings?.githubToken) return await interaction.editReply('先に `/github setup` を完了させてくれ！');
+      if (!settings?.githubToken) return await interaction.editReply('先に `/github setup` を完了させてください。');
 
       const repoOptions = await fetchUserRepos(decrypt(settings.githubToken));
-      if (repoOptions.length === 0) return await interaction.editReply('アクセス可能なリポジトリが見つからなかった。');
+      if (repoOptions.length === 0) return await interaction.editReply('アクセス可能なリポジトリが見つかりませんでした。');
 
       const select = new StringSelectMenuBuilder()
         .setCustomId('github-register-select')
-        .setPlaceholder('Botに登録するリポジトリを選んでくれ')
+        .setPlaceholder('Botに登録するリポジトリを選択してください')
         .addOptions(repoOptions.slice(0, 25)); // Discord制限: 最大25件
 
       return await interaction.editReply({
-        content: '君がアクセスできるリポジトリ（Private含む）を見つけてきたぞ！',
+        content: 'アクセス可能なリポジトリ（Private含む）を取得しました。',
         components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select)]
       });
     }
@@ -101,7 +101,7 @@ if (subcommand === 'list') {
       });
 
       if (repos.length === 0) {
-        return await interaction.editReply('登録されているリポジトリはないぞ。');
+        return await interaction.editReply('登録されているリポジトリはありません。');
       }
 
       // 💡 ここが重要！ メッセージとして表示するリストを作る
@@ -110,7 +110,7 @@ if (subcommand === 'list') {
       // 解除用のセレクトメニュー
       const select = new StringSelectMenuBuilder()
         .setCustomId('github-unregister-select')
-        .setPlaceholder('登録を解除するリポジトリを選択')
+        .setPlaceholder('解除するリポジトリを選択してください')
         .addOptions(repos.map(r => ({ 
           label: `${r.owner}/${r.repo}`, 
           value: `${r.owner}/${r.repo}` 
@@ -120,7 +120,7 @@ if (subcommand === 'list') {
 
       // 💡 content に repoListString を含めて返信！
       return await interaction.editReply({
-        content: `【登録済みリポジトリ一覧】\n${repoListString}\n\n🗑️ **解除したい場合は下のメニューから選んでくれ：**`,
+        content: `【登録済みリポジトリ一覧】\n${repoListString}\n\n🗑️ **登録を解除したい場合は、下のメニューから選択してください：**`,
         components: [row]
       });
     }
@@ -132,12 +132,12 @@ if (subcommand === 'list') {
       const workflow_id = interaction.options.getString('workflow', true);
 
       const settings = await prisma.userSetting.findUnique({ where: { userId: interaction.user.id } });
-      if (!settings?.githubToken) return await interaction.editReply('トークンがないぞ。');
+      if (!settings?.githubToken) return await interaction.editReply('トークンが登録されていません。');
 
       const octokit = new Octokit({ auth: decrypt(settings.githubToken) });
       await octokit.actions.createWorkflowDispatch({ owner, repo, workflow_id, ref: 'main' });
 
-      return await interaction.editReply(`🚀 **${fullRepo}** の \`${workflow_id}\` を起動したぞ！`);
+      return await interaction.editReply(`🚀 **${fullRepo}** の \`${workflow_id}\` を起動しました。`);
     }
 
     // --- WEBHOOK & DOCKER (既存ロジック維持) ---
@@ -160,7 +160,7 @@ if (subcommand === 'list') {
 // --- GHCR: パッケージ一覧表示 ---
     if (subcommand === 'ghcr') {
       const settings = await prisma.userSetting.findUnique({ where: { userId: interaction.user.id } });
-      if (!settings?.githubToken) return await interaction.editReply('先に `/github setup` をしてくれ！');
+      if (!settings?.githubToken) return await interaction.editReply('先に `/github setup` を行ってください。');
 
       const octokit = new Octokit({ auth: decrypt(settings.githubToken) });
 
@@ -169,7 +169,7 @@ if (subcommand === 'list') {
         package_type: 'container',
       });
 
-      if (packages.length === 0) return await interaction.editReply('GHCRにコンテナが見つからなかった。');
+      if (packages.length === 0) return await interaction.editReply('GHCRにコンテナが見つかりませんでした。');
 
       const embed = new EmbedBuilder()
         .setTitle('📦 GHCR Container Packages')
@@ -206,7 +206,7 @@ export async function executeSelectMenu(interaction: any) {
         update: {},
         create: { userId: interaction.user.id, owner, repo }
       });
-      return await interaction.editReply(`✅ **${owner}/${repo}** を登録したぞ！`);
+      return await interaction.editReply(`✅ **${owner}/${repo}** を登録しました。`);
             
     }
 
@@ -214,10 +214,10 @@ export async function executeSelectMenu(interaction: any) {
       await prisma.gitHubRepo.deleteMany({
         where: { userId: interaction.user.id, owner, repo }
       });
-      return await interaction.editReply(`🗑️ **${owner}/${repo}** の登録を解除したぞ。`);
+      return await interaction.editReply(`🗑️ **${owner}/${repo}** の登録を解除しました。`);
     }
   } catch (error) {
     console.error('SelectMenu Error:', error);
-    return await interaction.editReply('❌ 処理中にエラーが発生したぞ。DB接続を確認してくれ。');
+    return await interaction.editReply('❌ 処理中にエラーが発生しました。DB接続を確認してください。');
   }
 }

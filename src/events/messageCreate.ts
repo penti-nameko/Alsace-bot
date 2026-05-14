@@ -10,7 +10,7 @@ export async function execute(message: Message) {
   const afkData = await prisma.afk.findUnique({ where: { userId: message.author.id } });
   if (afkData) {
     await prisma.afk.delete({ where: { userId: message.author.id } });
-    const reply = await message.reply('おかえり！AFKモードを解除したぞ。');
+    const reply = await message.reply('おかえりなさい！AFKモードを解除しました。');
     setTimeout(() => reply.delete().catch(() => {}), 5000);
   }
 
@@ -26,7 +26,7 @@ export async function execute(message: Message) {
       if (message.deletable) {
         await message.delete().catch(() => {});
         // 通知用のメッセージを送信（5秒で消えるようにすると邪魔にならない）
-        const notice = await message.channel.send(`⚠️ ${message.author}、${user.username} は現在AFK中だ: **${targetAfk.reason}**\n(メンション保護のためメッセージを削除したぞ)`);
+        const notice = await message.channel.send(`⚠️ ${message.author}さん、${user.username}さんは現在AFK中です: **${targetAfk.reason}**\n(メンション保護のためメッセージを削除しました)`);
         setTimeout(() => notice.delete().catch(() => {}), 10000);
       }
     }

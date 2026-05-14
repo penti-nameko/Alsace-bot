@@ -1,0 +1,15 @@
+models:
+  - name: Qwen3 4B (Local)
+    provider: ollama
+    model: qwen3:4b
+    apiBase: http://172.16.210.47:11434
+    requestOptions:
+      timeout: 300
+
+tabAutocompleteModel:
+  name: Qwen3 4B (Local)
+  provider: ollama
+  model: qwen3:4b
+  apiBase: http://172.16.210.47:11434
+  requestOptions:
+    timeout: 300

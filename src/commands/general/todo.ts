@@ -1,10 +1,10 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { prisma } from '../../utils/prisma';
 import { Octokit } from '@octokit/rest'; 
 import { decrypt } from '../../utils/crypto';
 
 export const data = new SlashCommandBuilder()
-  .setName('task')
+  .setName('todo')
   .setDescription('TODO & Issue 管理')
   .addSubcommand(sub =>
     sub.setName('add').setDescription('TODOを追加')
@@ -20,7 +20,7 @@ export const data = new SlashCommandBuilder()
   );
 export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
-  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+  await interaction.deferReply();
 
   try {
     // --- ADD: ここを省略せずに書く ---
@@ -32,7 +32,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           content: content,
         }
       });
-      return await interaction.editReply(`✅ TODOを追加したぞ：${content}`);
+      return await interaction.editReply(`✅ TODOを追加しました：${content}`);
     }
 
     // --- LIST: ここも省略せずに書く ---
@@ -42,25 +42,44 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
 
       if (todos.length === 0) {
-        return await interaction.editReply('📝 TODOは空っぽだ。');
+        return await interaction.editReply('📝 TODOは登録されていません。');
       }
 
       const list = todos.map((t, i) => `${i + 1}. ${t.content}`).join('\n');
-      return await interaction.editReply(`【現在のTODO】\n${list}`);
+      return await interaction.editReply(`【現在のTODO一覧】\n${list}`);
     }
 
     // --- ISSUE ---
     if (subcommand === 'issue') {
-      // ...（送ってくれた GitHub Issue のロジック）...
-      // 最後に必ず return await interaction.editReply(...) があることを確認
+      const fullRepo = interaction.options.getString('repo', true);
+      const title = interaction.options.getString('title', true);
+      const [owner, repoName] = fullRepo.split('/');
+
+      if (!owner || !repoName) {
+        return await interaction.editReply('リポジトリ名は `owner/repo` の形式で入力してください。');
+      }
+
+      const settings = await prisma.userSetting.findUnique({ where: { userId: interaction.user.id } });
+      if (!settings?.githubToken) {
+        return await interaction.editReply('先に `/github setup` を完了させてください。');
+      }
+
+      const octokit = new Octokit({ auth: decrypt(settings.githubToken) });
+      const { data: issue } = await octokit.rest.issues.create({
+        owner,
+        repo: repoName,
+        title,
+      });
+
+      return await interaction.editReply(`✅ Issueを作成しました：**${issue.title}**\n🔗 ${issue.html_url}`);
     }
 
     // 💡 万が一、どのサブコマンドにも該当しなかった場合
-    return await interaction.editReply('不明なサブコマンドだ。');
+    return await interaction.editReply('不明なサブコマンドです。');
 
   } catch (error: any) {
     console.error('Task Error:', error);
     // deferしているので、reply ではなく editReply を使う
-    return await interaction.editReply(`❌ エラーが発生したぞ: ${error.message}`);
+    return await interaction.editReply(`❌ エラーが発生しました: ${error.message}`);
   }
 }
